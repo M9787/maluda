@@ -1,0 +1,234 @@
+---
+interface Props {
+  activeEvent?: { titleRu: string; location: string; price: number; eventISO: string | null } | null;
+  spotsLeft?: number | null;
+  capacity?: number | null;
+  currentPath?: string;
+}
+
+const { activeEvent = null, spotsLeft = null, capacity = null, currentPath = '/' } = Astro.props;
+
+const navLinks: Array<{ href: string; label: string }> = [
+  { href: '/courses', label: 'Курсы' },
+  { href: '/about',   label: 'О нас' },
+  { href: '/faq',     label: 'FAQ'   },
+];
+
+function isActive(href: string): boolean {
+  if (href === '/') return currentPath === '/';
+  return currentPath === href || currentPath.startsWith(href + '/');
+}
+
+let spotsColor = '#006b5f';
+let spotsTier: 'low' | 'mid' | 'high' = 'high';
+if (spotsLeft !== null) {
+  if (spotsLeft < 10) { spotsColor = '#dc2626'; spotsTier = 'low'; }
+  else if (spotsLeft <= 25) { spotsColor = '#d97706'; spotsTier = 'mid'; }
+}
+
+const showScarcity = spotsLeft !== null && spotsLeft <= 30;
+const showStickyScarcity = spotsLeft !== null && spotsLeft <= 25;
+const eventISO = activeEvent?.eventISO ?? null;
+---
+
+<nav
+  class="glass-navbar fixed top-0 left-0 right-0 z-50 h-16"
+  data-event-iso={eventISO}
+>
+  <div class="navbar-accent-line" aria-hidden="true"></div>
+
+  <div class="max-w-6xl mx-auto h-full px-4 flex items-center justify-between gap-3">
+    <!-- Logo (mark always; wordmark only on sm+) -->
+    <a href="/" class="nav-logo group" aria-label="MaLuDa — Главная">
+      <span class="nav-logo-mark" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
+          <defs>
+            <linearGradient id="ribbon-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#62fae3" />
+              <stop offset="100%" stop-color="#006b5f" stop-opacity="0.8" />
+            </linearGradient>
+            <linearGradient id="ribbon-navy" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#041627" />
+              <stop offset="100%" stop-color="#006b5f" stop-opacity="0.9" />
+            </linearGradient>
+          </defs>
+          <g>
+            <path d="M48 80 C20 75, 10 35, 30 15 C45 5, 55 25, 45 40 C35 55, 30 50, 40 70 Z" fill="url(#ribbon-cyan)" opacity="0.7" />
+            <path d="M52 80 C80 75, 90 35, 70 15 C55 5, 45 25, 55 40 C65 55, 70 50, 60 70 Z" fill="url(#ribbon-navy)" opacity="0.7" />
+            <path d="M30 15 C40 30, 50 50, 50 60 C50 50, 60 30, 70 15 C55 35, 50 75, 50 75 C50 75, 45 35, 30 15 Z" fill="url(#ribbon-cyan)" opacity="0.85" />
+            <path d="M38 85 Q50 92 62 85" stroke="url(#ribbon-navy)" stroke-width="4.5" stroke-linecap="round" fill="none" />
+            <path d="M42 92 Q50 97 58 92" stroke="url(#ribbon-cyan)" stroke-width="4.5" stroke-linecap="round" fill="none" />
+          </g>
+        </svg>
+      </span>
+      <span class="nav-logo-text" style="font-family: 'Manrope', sans-serif;">
+        <span class="text-gradient">MALUDA</span>
+      </span>
+    </a>
+
+    <!-- Mobile inline nav — 3 short text links + single sliding gradient underline -->
+    <div class="nav-mobile-links">
+      {navLinks.map(({ href, label }) => (
+        <a
+          href={href}
+          class:list={['nav-mobile-link', isActive(href) && 'nav-mobile-link-active']}
+        >
+          {label}
+        </a>
+      ))}
+      <span class="nav-mobile-underline" aria-hidden="true"></span>
+    </div>
+
+    <!-- Desktop Nav Links (sm collapses to inline links above) -->
+    <div class="hidden md:flex items-center gap-7">
+      {navLinks.map(({ href, label }) => (
+        <a
+          href={href}
+          class:list={['nav-link', isActive(href) && 'nav-link-active']}
+        >
+          {label}
+          <span class="nav-link-underline" aria-hidden="true"></span>
+        </a>
+      ))}
+    </div>
+
+    <!-- Desktop right cluster: scarcity + CTA -->
+    <div class="hidden md:flex items-center gap-3">
+      {showScarcity && activeEvent && (
+        <a
+          href="/#register"
+          class="nav-scarcity"
+          data-tier={spotsTier}
+          aria-label={`Осталось ${spotsLeft} мест из ${capacity}`}
+          style={`--scarcity-color: ${spotsColor}`}
+        >
+          <span class="nav-scarcity-dot"></span>
+          <span class="nav-scarcity-text">
+            Осталось <strong>{spotsLeft}</strong> мест
+          </span>
+        </a>
+      )}
+      <a href="/#register" class="nav-cta" aria-label="Забронировать бесплатное место на мастер-класс">
+        <span class="nav-cta-shimmer" aria-hidden="true"></span>
+        <span class="nav-cta-label">Бесплатный мастер-класс</span>
+        <svg class="nav-cta-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M13 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile sticky CTA — scarcity baked in -->
+<div
+  id="mobile-sticky-cta"
+  class="mobile-sticky-cta"
+  data-has-scarcity={showStickyScarcity ? 'true' : 'false'}
+>
+  <a href="/#register" class="btn-glow mobile-sticky-cta-link">
+    {showStickyScarcity ? (
+      <span class="mobile-sticky-cta-text">
+        <span class="mobile-sticky-cta-scarcity" style={`color: ${spotsColor}`}>
+          <span class="mobile-sticky-cta-dot" style={`background: ${spotsColor}`}></span>
+          Осталось <strong>{spotsLeft}</strong> мест
+        </span>
+        <span class="mobile-sticky-cta-sep">·</span>
+        <span class="mobile-sticky-cta-action">Записаться <span aria-hidden="true">→</span></span>
+      </span>
+    ) : (
+      <span class="mobile-sticky-cta-text">Бесплатный мастер-класс <span aria-hidden="true">→</span></span>
+    )}
+  </a>
+</div>
+
+<script>
+  const stickyCta = document.getElementById('mobile-sticky-cta');
+  if (stickyCta && window.innerWidth < 768) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          stickyCta.classList.add('visible');
+        } else {
+          stickyCta.classList.remove('visible');
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const hero = document.getElementById('hero') ?? document.querySelector('section');
+    if (hero) observer.observe(hero);
+  }
+
+  // Sliding gradient underline beneath the mobile nav links.
+  // One <span> animates between three link positions via translateX + width.
+  // Spring easing for the "alive" feel; reduced-motion users get instant placement.
+  const mobileLinksContainer = document.querySelector<HTMLElement>('.nav-mobile-links');
+  if (mobileLinksContainer) {
+    const underline = mobileLinksContainer.querySelector<HTMLElement>('.nav-mobile-underline');
+    const links = Array.from(mobileLinksContainer.querySelectorAll<HTMLElement>('.nav-mobile-link'));
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function positionUnderline(target: HTMLElement | null, animate = true) {
+      if (!underline || !target || !mobileLinksContainer) return;
+      const linkRect = target.getBoundingClientRect();
+      const containerRect = mobileLinksContainer.getBoundingClientRect();
+      const offset = linkRect.left - containerRect.left;
+      const prevTransition = underline.style.transition;
+      if (!animate) underline.style.transition = 'none';
+      underline.style.transform = `translate3d(${offset}px, 0, 0)`;
+      underline.style.width = `${linkRect.width}px`;
+      if (!animate) {
+        // Force reflow then restore transition so the next move animates.
+        void underline.offsetWidth;
+        underline.style.transition = prevTransition;
+      }
+    }
+
+    function getActiveLink(): HTMLElement | null {
+      return mobileLinksContainer!.querySelector<HTMLElement>('.nav-mobile-link-active');
+    }
+
+    function snapToActive(animate: boolean) {
+      const active = getActiveLink();
+      if (!active || !underline) {
+        underline?.classList.remove('is-visible');
+        return;
+      }
+      underline.classList.add('is-visible');
+      positionUnderline(active, animate);
+    }
+
+    // Initial: snap without animation, then show.
+    snapToActive(false);
+
+    // Hover/focus preview — slide toward the link the user is about to tap.
+    if (!reduceMotion) {
+      links.forEach((link) => {
+        link.addEventListener('pointerenter', () => positionUnderline(link, true));
+        link.addEventListener('focus', () => positionUnderline(link, true));
+      });
+      mobileLinksContainer.addEventListener('pointerleave', () => snapToActive(true));
+    }
+
+    // Resize: silently reposition.
+    window.addEventListener('resize', () => snapToActive(false));
+  }
+
+  const cta = document.querySelector<HTMLElement>('.nav-cta');
+  if (cta && window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let raf = 0;
+    cta.addEventListener('pointermove', (e) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const r = cta.getBoundingClientRect();
+        const mx = (e.clientX - (r.left + r.width / 2)) / r.width;
+        const my = (e.clientY - (r.top + r.height / 2)) / r.height;
+        cta.style.setProperty('--cta-tx', `${mx * 4}px`);
+        cta.style.setProperty('--cta-ty', `${my * 3}px`);
+      });
+    });
+    cta.addEventListener('pointerleave', () => {
+      cta.style.setProperty('--cta-tx', '0px');
+      cta.style.setProperty('--cta-ty', '0px');
+    });
+  }
+</script>

@@ -1,0 +1,140 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  lang?: string;
+  heroPoster?: string;
+}
+
+const {
+  title,
+  description = 'Практические IT-курсы в Батуми. Python, Data Analysis, Project Management, DevOps. Живые занятия, малые группы, реальные проекты.',
+  ogImage = '/og-image.png',
+  lang = 'ru',
+  heroPoster,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://maluda.ge');
+const siteURL = (Astro.site ?? new URL('https://maluda.ge')).toString().replace(/\/$/, '');
+const altRu = `${siteURL}${Astro.url.pathname}`;
+const altEn = `${siteURL}/en${Astro.url.pathname === '/' ? '/' : Astro.url.pathname}`;
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'EducationalOrganization',
+  name: 'MaLuDa IT School',
+  url: siteURL,
+  logo: `${siteURL}/favicon.svg`,
+  description: 'Практическая IT-школа в Батуми. Python, Data Analysis, DevOps, AI.',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Batumi',
+    addressCountry: 'GE',
+    streetAddress: 'Europe Square area',
+  },
+  founder: [
+    { '@type': 'Person', name: 'Martin Varzhapetyan' },
+    { '@type': 'Person', name: 'Aleksandr Lukianov' },
+  ],
+  sameAs: [
+    'https://t.me/maluda_batumi',
+    'https://instagram.com/maluda_batumi',
+  ],
+};
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Locale alternates for ru/en. The /en/ tree may not exist yet, but
+         declaring it now sets up SEO when those routes ship. -->
+    <link rel="alternate" hreflang="ru" href={altRu} />
+    <link rel="alternate" hreflang="en" href={altEn} />
+    <link rel="alternate" hreflang="x-default" href={altRu} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={lang === 'ru' ? 'ru_RU' : 'en_US'} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Theme color (single, correct value for light mode) -->
+    <meta name="theme-color" content="#f7f9fb" />
+
+    <!-- Hero poster preload — only on pages that render a hero video, prevents the
+         brief flash of bg-color before the poster decodes -->
+    {heroPoster && <link rel="preload" as="image" href={heroPoster} fetchpriority="high" />}
+
+    <!-- Non-blocking Google Fonts.
+         Trick: load as `media="print"` (browser fetches but doesn't apply),
+         then on `onload` swap media to "all" so the styles take effect.
+         <noscript> fallback keeps it working with JS disabled.
+         display=swap means text is visible in fallback font during fetch. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800;900&family=Inter:wght@400;500;700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800;900&family=Inter:wght@400;500;700&display=swap"
+      />
+    </noscript>
+
+    <title>{title}</title>
+
+    <script type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)} />
+  </head>
+  <body class="bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] min-h-screen antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only fixed top-2 left-2 z-[100] px-4 py-2 rounded-md font-semibold"
+      style="background: var(--color-accent-secondary); color: white;"
+    >
+      Перейти к содержимому
+    </a>
+    <slot />
+
+    <!-- Initialize GSAP animations after DOM is ready. The init returns a
+         cleanup function; we store it so navigation (Astro View Transitions)
+         or page unload can kill ScrollTriggers and global tweens. -->
+    <script>
+      import { initAllAnimations } from '../lib/gsap-animations';
+      let cleanup: (() => void) | null = null;
+      const boot = () => {
+        if (cleanup) cleanup();
+        requestAnimationFrame(() => {
+          cleanup = initAllAnimations();
+        });
+      };
+      document.addEventListener('DOMContentLoaded', boot);
+      document.addEventListener('astro:after-swap', boot);
+      window.addEventListener('beforeunload', () => {
+        if (cleanup) cleanup();
+      });
+    </script>
+  </body>
+</html>

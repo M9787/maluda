@@ -1,0 +1,46 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import FAQAccordion from '../islands/FAQAccordion';
+import { t } from '../i18n';
+import { db, FaqItems, eq, asc } from 'astro:db';
+
+const faqRows = await db
+  .select()
+  .from(FaqItems)
+  .where(eq(FaqItems.isActive, true))
+  .orderBy(asc(FaqItems.sortOrder));
+
+const faqItems = faqRows.map((row) => ({
+  question: row.question,
+  answer: row.answer,
+}));
+---
+
+<PageLayout title={t('nav.faq')} description={t('faq.headline')}>
+  <div class="pt-24 pb-12 min-h-screen flex flex-col">
+    <!-- FAQ SECTION -->
+    <section id="faq" class="py-12 md:py-20 px-4 flex-grow">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-16">
+          <h1 class="text-4xl md:text-5xl font-bold mb-6 font-heading" data-animate="heading">
+            <span class="text-gradient">{t('faq.headline')}</span>
+          </h1>
+          <p class="text-lg text-[var(--color-text-secondary)]">
+            Всё, что нужно знать перед тем, как присоединиться к нам.
+          </p>
+        </div>
+
+        <div class="glass p-2 sm:p-4 rounded-2xl">
+          <FAQAccordion items={faqItems} client:visible />
+        </div>
+
+        <div class="mt-16 text-center">
+          <p class="text-[var(--color-text-secondary)] mb-4">Остались вопросы?</p>
+          <a href="https://t.me/maluda_batumi" target="_blank" rel="noopener noreferrer" class="btn-outline">
+            Написать нам в Telegram
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</PageLayout>

@@ -1,0 +1,51 @@
+# === Allowlist root: ignore everything by default, then opt-in the code ===
+/*
+
+# Re-include essentials
+!.gitignore
+!README.md
+!maluda-website/
+!generate_pdfs.py
+!show_greeting.py
+
+# === Always-ignore patterns (defense-in-depth) ===
+
+# Local AI tool state — DO NOT COMMIT (claude.json holds a Google API key)
+.claude/
+.gitnexus/
+.aider*
+claude.json
+GEMINI.md
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets / env (defense-in-depth — should never appear at root)
+.env
+.env.*
+*.env
+secrets*
+credentials*
+*.pem
+*.key
+id_rsa*
+
+# Scratch / large binaries
+*.mp4
+*.mov
+video_frames/
+
+# Python bytecode / build
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node / Astro build under subprojects (also covered by maluda-website/.gitignore)
+node_modules/
+dist/
+.astro/

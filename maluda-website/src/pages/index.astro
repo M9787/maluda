@@ -1,0 +1,455 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import RegistrationForm from '../islands/RegistrationForm';
+import ScrollXPBar from '../islands/ScrollXPBar';
+import RewardToast from '../islands/RewardToast';
+import CursorTrail from '../islands/CursorTrail';
+import SocialProofToast from '../islands/SocialProofToast';
+import Quiz from '../islands/Quiz';
+import { t } from '../i18n';
+import { db, Media, QuizQuestions, QuizAssessments, Rewards, Courses, Events, Registrations, eq, and, asc, desc, count } from 'astro:db';
+
+const eventExperiences = Array.from({ length: 5 }, (_, i) => t(`register.experience.${i + 1}`));
+
+const heroMediaRow = await db
+  .select()
+  .from(Media)
+  .where(and(eq(Media.slot, 'hero'), eq(Media.isActive, true)))
+  .get();
+
+const registerMediaRow = await db
+  .select()
+  .from(Media)
+  .where(and(eq(Media.slot, 'register'), eq(Media.isActive, true)))
+  .get();
+
+const heroMedia = heroMediaRow ?? {
+  src: '/secondary-loop.mp4',
+  poster: '/secondary-bg.jpg',
+  alt: 'MaLuDa hero atmosphere',
+};
+const registerMedia = registerMediaRow ?? {
+  src: '/secondary-bg.mp4',
+  poster: '/secondary-bg.jpg',
+  alt: 'Registration background',
+};
+
+const quizRows = await db
+  .select()
+  .from(QuizQuestions)
+  .where(eq(QuizQuestions.isActive, true))
+  .orderBy(asc(QuizQuestions.sortOrder));
+
+const quizQuestions = quizRows.map((row) => ({
+  question: row.question,
+  options: JSON.parse(row.optionsJson) as string[],
+  correctIndex: row.correctIndex,
+  funFact: row.funFact,
+  tag: row.tag ?? undefined,
+}));
+
+const assessmentRows = await db
+  .select()
+  .from(QuizAssessments)
+  .where(eq(QuizAssessments.isActive, true))
+  .orderBy(asc(QuizAssessments.sortOrder));
+
+const quizAssessments = assessmentRows.map((row) => ({
+  id: row.id,
+  maxPctInclusive: row.maxPctInclusive,
+  level: row.level,
+  title: row.title,
+  desc: row.description,
+  cta: row.cta,
+  ctaHref: row.ctaHref,
+  color: row.color,
+  nudge: row.nudge,
+}));
+
+const rewardRows = await db
+  .select()
+  .from(Rewards)
+  .where(eq(Rewards.isActive, true))
+  .orderBy(asc(Rewards.xpThreshold));
+
+const rewards = rewardRows.map((r) => ({
+  xp: r.xpThreshold,
+  type: r.type,
+  title: r.title,
+  desc: r.description,
+  icon: r.icon,
+}));
+
+// Active event + scarcity counter for the register section.
+const activeEvent = await db
+  .select()
+  .from(Events)
+  .where(eq(Events.isActive, true))
+  .orderBy(asc(Events.eventDate))
+  .get();
+
+let registerSpots: { left: number; capacity: number; color: string } | null = null;
+if (activeEvent) {
+  const [{ value: registeredCount }] = await db
+    .select({ value: count() })
+    .from(Registrations)
+    .where(eq(Registrations.registrationType, 'general'));
+  const left = Math.max(0, activeEvent.capacity - registeredCount);
+  let color = '#006b5f';
+  if (left < 10) color = '#dc2626';
+  else if (left <= 25) color = '#d97706';
+  registerSpots = { left, capacity: activeEvent.capacity, color };
+}
+
+// Real recent registrations for the social-proof toast. Empty array = no toast
+// (we never fabricate names — in a small social graph like Batumi, fake names
+// get recognized and burn trust word-of-mouth).
+const recentRegistrationRows = await db
+  .select({
+    fullName: Registrations.fullName,
+    courseInterest: Registrations.courseInterest,
+    createdAt: Registrations.createdAt,
+  })
+  .from(Registrations)
+  .orderBy(desc(Registrations.createdAt))
+  .limit(10);
+
+const courseLabels: Record<string, string> = {
+  'python-sql': 'Python + SQL',
+  'data-analysis': 'Data Analysis',
+  'devops-cloud': 'DevOps & Cloud',
+  'vibe-coding': 'Vibe Coding & AI',
+  'claude-code': 'Claude Code: Автоматизация',
+  'not-sure': 'Бесплатное мероприятие',
+};
+
+const _nowMs = Date.now();
+const socialProofEntries = recentRegistrationRows
+  .filter((r) => r.fullName && r.createdAt)
+  .map((r) => {
+    const minutesAgo = Math.max(1, Math.floor((_nowMs - new Date(r.createdAt as Date).getTime()) / 60_000));
+    const firstName = String(r.fullName).trim().split(/\s+/)[0];
+    return {
+      name: firstName,
+      course: courseLabels[r.courseInterest as string] ?? 'Курс MaLuDa',
+      minutesAgo,
+    };
+  })
+  .filter((e) => e.minutesAgo <= 60 * 48); // within last 48h
+
+// Display date for the event card — DB-driven, falls back to i18n string.
+const eventDateLabel = activeEvent
+  ? new Date(activeEvent.eventDate).toLocaleString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  : t('register.event_date');
+---
+
+<PageLayout title={t('site.title')} description={t('site.description')} heroPoster={heroMedia.poster}>
+
+  <!-- Global gamification + neuromarketing layers. `client:media` defers the
+       JS chunk download until the device actually qualifies — no wasted bytes
+       on phones for desktop-only effects (CursorTrail, ScrollXPBar) or for
+       coarse pointers (no 3D tilt without a mouse). -->
+  <ScrollXPBar client:media="(min-width: 768px)" />
+  <RewardToast rewards={rewards} client:idle />
+  <CursorTrail client:media="(pointer: fine) and (min-width: 768px) and (prefers-reduced-motion: no-preference)" />
+  <SocialProofToast entries={socialProofEntries} client:idle />
+
+  <!-- ================================================
+       SECTION 1: HERO — Cinematic dual-video entry
+       ================================================ -->
+  <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden bg-[var(--color-bg-primary)]">
+
+    <!-- Levitating container — single hero clip, sourced from astro:db Media row.
+         The clip is a pre-rendered boomerang loop (forward+reverse merged with
+         2x slowdown baked in). Browser-native looping means no JS source-swap
+         and no decoder reset between cycles — the seam is literally invisible. -->
+    <div id="hero-video-wrap" class="absolute inset-0 hero-levitate-offset pointer-events-none">
+      <video
+        id="hero-vid"
+        autoplay
+        loop
+        muted
+        playsinline
+        preload="none"
+        poster={heroMedia.poster}
+        aria-label={heroMedia.alt}
+        style={`background-color: var(--color-bg-primary);`}
+        class="hero-video-layer absolute inset-0 w-full h-full object-cover"
+      >
+        <source src={heroMedia.src} type="video/mp4" />
+      </video>
+    </div>
+
+    <!-- Edge blending -->
+    <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(circle at center, transparent 35%, var(--color-bg-primary) 100%);"></div>
+
+
+    <!-- Hero Content -->
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center pt-20">
+      <h1
+        class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 font-heading"
+        data-animate="hero-headline"
+      >
+        <span class="text-gradient">{t('hero.headline')}</span>
+      </h1>
+      <p
+        class="text-lg md:text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto mb-10 leading-relaxed"
+        data-animate="hero-sub"
+      >
+        {t('hero.subheadline')}
+      </p>
+      <div data-animate="hero-cta" class="flex flex-col items-center justify-center gap-3 mb-3 w-full max-w-md mx-auto">
+        <a
+          href="#register"
+          class="btn-primary text-base md:text-lg px-10 py-5 w-full font-bold"
+          style="font-size: clamp(1rem, 2.2vw, 1.15rem); min-height: 56px;"
+        >
+          {t('hero.cta')} →
+        </a>
+        <a
+          href="#quiz"
+          class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-accent-secondary)] inline-flex items-center gap-1.5 transition-colors group"
+        >
+          <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent-primary)]/15 text-[var(--color-accent-primary)] text-[10px] font-bold group-hover:bg-[var(--color-accent-primary)]/25 transition-colors" aria-hidden="true">?</span>
+          <span class="group-hover:underline underline-offset-4">{t('hero.quiz_nudge')}</span>
+        </a>
+      </div>
+      <p class="text-xs text-[var(--color-text-secondary)]/60" data-animate="hero-sub">
+        {t('hero.supporting')}
+      </p>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      <svg class="w-6 h-6 text-[var(--color-text-secondary)]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    </div>
+  </section>
+
+  <!-- ================================================
+       SECTION 2: LIVE STATS STRIP — real numbers, no vanity
+       ================================================ -->
+  <section class="py-10 px-4 border-y border-[var(--color-text-primary)]/5">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 text-center">
+        <div class="stat-item" data-animate="heading">
+          <div class="stat-number">Скоро</div>
+          <div class="stat-label">Запуск</div>
+        </div>
+        <div class="stat-item" data-animate="heading">
+          {registerSpots ? (
+            <div class="stat-number" data-count={String(registerSpots.left)} data-count-suffix="">0</div>
+          ) : (
+            <div class="stat-number">30</div>
+          )}
+          <div class="stat-label">Мест свободно</div>
+        </div>
+        <div class="stat-item" data-animate="heading">
+          <div class="stat-number">≤ 8</div>
+          <div class="stat-label">В группе</div>
+        </div>
+        <div class="stat-item" data-animate="heading">
+          <div class="stat-number">Live</div>
+          <div class="stat-label">Только практика</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================
+       SECTION 3: THE PROBLEM — Loss aversion trigger
+       ================================================ -->
+  <section class="py-20 md:py-28 px-4">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-8 font-heading" data-animate="heading">
+        У онлайн-курсов <span class="text-[var(--color-accent-tertiary)]" style="color:var(--color-accent-secondary);" data-count="90" data-count-suffix="%">0%</span> отсева.<br/>И на это есть причина.
+      </h2>
+
+      <div class="space-y-5 text-[var(--color-text-secondary)] text-lg leading-relaxed text-left max-w-2xl mx-auto">
+        <p>{t('problem.p1')}</p>
+        <p class="text-[var(--color-text-primary)] font-semibold text-xl border-l-4 pl-4" style="border-color: var(--color-accent-secondary);">{t('problem.p2')}</p>
+        <p>{t('problem.p3')}</p>
+        <p class="text-[var(--color-accent-secondary)] font-bold text-xl">{t('problem.p4')}</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ================================================
+       SECTION 4: QUIZ — Attraction → Comfort → Assessment
+       ================================================ -->
+  <section id="quiz" class="py-20 md:py-28 px-4 portal-section relative z-20">
+    <div class="max-w-4xl mx-auto relative">
+      <div class="text-center mb-10">
+        <span class="inline-block text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4" style="background: rgba(0,107,95,0.08); color: var(--color-accent-secondary); border: 1px solid rgba(0,107,95,0.2);">
+          Бесплатный тест
+        </span>
+        <h2 class="text-3xl md:text-4xl font-bold font-heading mb-3" data-animate="heading">
+          Насколько ты готов к IT-карьере?
+        </h2>
+        <p class="text-[var(--color-text-secondary)] max-w-xl mx-auto">
+          7 вопросов · Получи персональную оценку уровня · Узнай, какой курс подходит именно тебе
+        </p>
+      </div>
+      <Quiz questions={quizQuestions} assessments={quizAssessments} quizLength={7} client:visible />
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ================================================
+       SECTION 5: VALUE PROPOSITION — Contrast effect
+       ================================================ -->
+  <section class="py-20 md:py-28 px-4">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-12 font-heading" data-animate="heading">
+        {t('value.headline')}
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- MaLuDa Column -->
+        <div class="glass-card p-6 md:p-8 border-t-4" style="border-top-color: var(--color-accent-secondary);" data-animate="compare-left">
+          <h3 class="text-lg font-bold text-[var(--color-accent-secondary)] mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[var(--color-accent-secondary)]"></span>
+            MaLuDa
+          </h3>
+          <ul class="space-y-4">
+            {[1,2,3,4,5].map((i) => (
+              <li class="flex items-start gap-3">
+                <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-accent-secondary);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-[var(--color-text-primary)] font-medium">{t(`value.maluda.${i}`)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <!-- Self-Study Column -->
+        <div class="glass-card p-6 md:p-8 opacity-55" data-animate="compare-right">
+          <h3 class="text-lg font-semibold text-[var(--color-text-secondary)] mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[var(--color-text-secondary)]/40"></span>
+            Самообучение
+          </h3>
+          <ul class="space-y-4">
+            {[1,2,3,4,5].map((i) => (
+              <li class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-red-400/50 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span class="text-[var(--color-text-secondary)]">{t(`value.selfstudy.${i}`)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <p class="text-center text-[var(--color-text-secondary)] mt-8 max-w-2xl mx-auto">
+        {t('value.supporting')}
+      </p>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ================================================
+       SECTION 6: REGISTRATION — CTA after objections
+       ================================================ -->
+  <section id="register" class="py-20 md:py-28 px-4 bg-[var(--color-bg-secondary)] portal-section relative overflow-hidden">
+    <!-- Cinematic Background -->
+    <video
+      data-lazy-video
+      loop
+      muted
+      playsinline
+      preload="none"
+      poster={registerMedia.poster}
+      aria-label={registerMedia.alt}
+      class="register-bg-video absolute inset-0 w-full h-full object-cover opacity-10 mix-blend-multiply pointer-events-none"
+    >
+      <source src={registerMedia.src} type="video/mp4" />
+    </video>
+    <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-secondary)]/90 via-[var(--color-bg-secondary)]/50 to-[var(--color-bg-secondary)]/90 pointer-events-none"></div>
+
+    <div class="max-w-4xl mx-auto relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
+        <!-- Left: Event Info -->
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="urgency-badge">
+              <span class="urgency-dot"></span>
+              Регистрация открыта
+            </span>
+          </div>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4 font-heading" data-animate="heading">
+            {t('register.headline')}
+          </h2>
+          <p class="text-[var(--color-text-secondary)] text-lg mb-8">
+            {t('register.subheadline')}
+          </p>
+
+          <div class="glass-card p-6 mb-6">
+            <h3 class="text-xl font-bold text-[var(--color-accent-secondary)] mb-1">{t('register.event_title')}</h3>
+            <p class="text-[var(--color-text-secondary)] text-sm mb-5">
+              {eventDateLabel} &bull; {t('register.event_location')}
+            </p>
+
+            <p class="text-sm font-semibold text-[var(--color-text-primary)] mb-3">Что тебя ждёт:</p>
+            <ul class="space-y-2.5">
+              {eventExperiences.map((exp) => (
+                <li class="flex items-start gap-2.5 text-sm">
+                  <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--color-accent-secondary);">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="text-[var(--color-text-primary)]">{exp}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p class="text-sm text-[var(--color-text-secondary)] flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-[var(--color-accent-secondary)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {t('register.spots')}
+          </p>
+        </div>
+
+        <!-- Right: Registration Form -->
+        <div class="glass p-6 md:p-8 rounded-2xl">
+          {(activeEvent || registerSpots) && (
+            <div class="register-urgency-strip mb-5">
+              {activeEvent && (
+                <div class="register-urgency-row">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span data-countdown class="register-urgency-text">скоро</span>
+                </div>
+              )}
+              {registerSpots && (
+                <div class="register-urgency-row" style={`color: ${registerSpots.color}`}>
+                  <span class="register-urgency-dot" style={`background: ${registerSpots.color}`}></span>
+                  <span class="register-urgency-text">
+                    Осталось <strong>{registerSpots.left}</strong> из {registerSpots.capacity} мест
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          <h3 class="text-xl font-bold mb-5 font-heading">{t('register.cta')}</h3>
+          <RegistrationForm client:visible />
+        </div>
+      </div>
+    </div>
+  </section>
+
+</PageLayout>

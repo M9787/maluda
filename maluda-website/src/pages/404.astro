@@ -1,0 +1,24 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout title="Страница не найдена — MaLuDa" description="Эта страница не существует. Вернись на главную или посмотри курсы.">
+  <section class="min-h-[70vh] flex items-center justify-center px-4 pt-24 pb-12">
+    <div class="max-w-xl mx-auto text-center">
+      <p class="text-7xl md:text-8xl font-black font-heading mb-4">
+        <span class="text-gradient">404</span>
+      </p>
+      <h1 class="text-2xl md:text-3xl font-bold mb-3 font-heading">Этой страницы нет</h1>
+      <p class="text-[var(--color-text-secondary)] mb-8 leading-relaxed">
+        Может, ссылка устарела или мы её переименовали. Вот куда можно вернуться:
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/" class="btn-primary px-6 py-3 font-semibold">На главную →</a>
+        <a href="/courses" class="btn-outline px-6 py-3 font-semibold">Смотреть курсы</a>
+      </div>
+      <p class="mt-10 text-sm text-[var(--color-text-secondary)]">
+        Или напиши нам в <a href="https://t.me/maluda_batumi" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent-secondary)] hover:underline font-medium">Telegram</a> — поможем найти.
+      </p>
+    </div>
+  </section>
+</PageLayout>
