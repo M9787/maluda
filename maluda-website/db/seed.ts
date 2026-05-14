@@ -299,7 +299,7 @@ export default async function seed() {
   await db.insert(TeamMembers).values([
     { id: 'martin', name: 'Мартин', role: 'Co-founder · Data Science & AI Stack', bio: 'Эксперт в области анализа данных и искусственного интеллекта. Специализируется на разработке сложных аналитических систем и внедрении AI-решений в бизнес-процессы.', accentColor: '#041627', sortOrder: 1, isActive: true },
     { id: 'sasha', name: 'Саша', role: 'Co-founder · DevOps & AI Stack', bio: 'Специалист по облачной инфраструктуре и автоматизации. Фокусируется на создании масштабируемых систем и интеграции AI-инструментов в современные DevOps-пайплайны.', accentColor: '#006B5F', sortOrder: 2, isActive: true },
-    { id: 'dato', name: 'Дато', role: 'Ambassador & Partner', bio: 'Помогает MaLuDa расти и развиваться в Батуми. Связывает школу с локальным IT-сообществом и бизнесом.', accentColor: '#3B82F6', sortOrder: 3, isActive: true },
+    { id: 'dato', name: 'Дато', role: 'Co-founder · Ambassador & Community', bio: 'Помогает MaLuDa расти и развиваться в Батуми. Связывает школу с локальным IT-сообществом и бизнесом.', accentColor: '#3B82F6', sortOrder: 3, isActive: true },
   ]);
 
   await db.insert(Rewards).values([
