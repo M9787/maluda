@@ -82,7 +82,9 @@
   "register.experience.4": "Q&A with the MaLuDa team",
   "register.experience.5": "Meet other people in Batumi who care about IT",
   "register.cta": "Reserve your free seat",
-  "register.spots": "Seats limited by venue capacity. Registration takes 30 seconds.",
+  "register.spots": "Cohort cap is 8 — we hold the line. Registration takes 30 seconds.",
+  "register.badge": "You'd be in the founding cohort. That's rare.",
+  "register.what_awaits": "What's in store:",
 
   "footer.headline": "Ready to start?",
   "footer.text": "Pick a course and change your career. Or come to the free event first.",
@@ -109,5 +111,22 @@
   "form.submit": "Sign up",
   "form.submitting": "Sending...",
   "form.success": "Done! We'll be in touch shortly.",
-  "form.error": "Something went wrong. Try again or message us on Telegram."
+  "form.error": "Something went wrong. Try again or message us on Telegram.",
+
+  "a11y.skip_to_main": "Skip to main content",
+
+  "stats.launch_value": "Soon",
+  "stats.launch_label": "Launch",
+  "stats.spots_fallback": "30",
+  "stats.spots_label": "Seats open",
+  "stats.group_value": "≤ 8",
+  "stats.group_label": "Per cohort",
+  "stats.format_value": "Live",
+  "stats.format_label": "Practice only",
+
+  "value.selfstudy_label": "Self-study",
+
+  "quiz.badge": "Free quiz",
+  "quiz.headline": "How ready are you for an IT career?",
+  "quiz.subheadline": "7 questions · Get your personal level assessment · Find the right course for you"
 }

@@ -86,7 +86,8 @@ const eventJsonLd = activeEvent ? {
   // navigation clears it and we don't leak intervals.
   const nav = document.querySelector<HTMLElement>('nav[data-event-iso]');
   const eventISO = nav?.dataset.eventIso;
-  if (eventISO) {
+  if (eventISO && nav?.dataset.countdownInit !== 'true') {
+    if (nav) nav.dataset.countdownInit = 'true';
     const target = new Date(eventISO).getTime();
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -122,6 +123,7 @@ const eventJsonLd = activeEvent ? {
     });
     document.addEventListener('astro:before-swap', () => {
       if (intervalId !== null) clearInterval(intervalId);
+      if (nav) nav.dataset.countdownInit = 'false';
     });
   }
 </script>

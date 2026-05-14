@@ -82,7 +82,9 @@
   "register.experience.4": "Q&A с командой MaLuDa",
   "register.experience.5": "Знакомство с людьми в Батуми, которым интересно IT",
   "register.cta": "Забронировать бесплатное место",
-  "register.spots": "Места ограничены вместимостью площадки. Регистрация занимает 30 секунд.",
+  "register.spots": "Группа не больше 8 человек — мы держим обещание. Регистрация занимает 30 секунд.",
+  "register.badge": "Ты — в первой когорте. Это редко.",
+  "register.what_awaits": "Что тебя ждёт:",
 
   "footer.headline": "Готов начать?",
   "footer.text": "Выбери курс и измени свою карьеру. Или приходи сначала на бесплатное мероприятие.",
@@ -109,5 +111,22 @@
   "form.submit": "Записаться",
   "form.submitting": "Отправка...",
   "form.success": "Готово! Мы свяжемся с тобой в ближайшее время.",
-  "form.error": "Что-то пошло не так. Попробуй ещё раз или напиши нам в Telegram."
+  "form.error": "Что-то пошло не так. Попробуй ещё раз или напиши нам в Telegram.",
+
+  "a11y.skip_to_main": "Перейти к содержимому",
+
+  "stats.launch_value": "Скоро",
+  "stats.launch_label": "Запуск",
+  "stats.spots_fallback": "30",
+  "stats.spots_label": "Мест свободно",
+  "stats.group_value": "≤ 8",
+  "stats.group_label": "В группе",
+  "stats.format_value": "Live",
+  "stats.format_label": "Только практика",
+
+  "value.selfstudy_label": "Самообучение",
+
+  "quiz.badge": "Бесплатный тест",
+  "quiz.headline": "Насколько ты готов к IT-карьере?",
+  "quiz.subheadline": "7 вопросов · Получи персональную оценку уровня · Узнай, какой курс подходит именно тебе"
 }

@@ -254,7 +254,7 @@
     border-radius: 0.625rem;
     padding: 0.75rem 1rem;
     color: var(--color-text-primary);
-    font-size: 0.9375rem;
+    font-size: 1rem;
     transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
     box-shadow: 0 1px 3px rgba(4, 22, 39, 0.05);
@@ -264,8 +264,12 @@
   }
   .input-field:focus {
     border-color: var(--color-accent-secondary);
-    box-shadow: 0 0 0 3px rgba(0, 107, 95, 0.12);
+    box-shadow: 0 0 0 3px rgba(0, 107, 95, 0.4);
     background: #ffffff;
+  }
+  .input-field:focus-visible {
+    outline: 2px solid var(--color-accent-secondary);
+    outline-offset: 2px;
   }
   .input-field:hover:not(:focus) {
     border-color: rgba(4, 22, 39, 0.25);
@@ -334,6 +338,7 @@
     right: 0;
     z-index: 45;
     padding: 0.75rem 1rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     background: rgba(247, 249, 251, 0.95);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);

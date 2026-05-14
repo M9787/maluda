@@ -240,24 +240,24 @@ const eventDateLabel = activeEvent
     <div class="max-w-4xl mx-auto">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 text-center">
         <div class="stat-item" data-animate="heading">
-          <div class="stat-number">Скоро</div>
-          <div class="stat-label">Запуск</div>
+          <div class="stat-number">{t('stats.launch_value')}</div>
+          <div class="stat-label">{t('stats.launch_label')}</div>
         </div>
         <div class="stat-item" data-animate="heading">
           {registerSpots ? (
             <div class="stat-number" data-count={String(registerSpots.left)} data-count-suffix="">0</div>
           ) : (
-            <div class="stat-number">30</div>
+            <div class="stat-number">{t('stats.spots_fallback')}</div>
           )}
-          <div class="stat-label">Мест свободно</div>
+          <div class="stat-label">{t('stats.spots_label')}</div>
         </div>
         <div class="stat-item" data-animate="heading">
-          <div class="stat-number">≤ 8</div>
-          <div class="stat-label">В группе</div>
+          <div class="stat-number">{t('stats.group_value')}</div>
+          <div class="stat-label">{t('stats.group_label')}</div>
         </div>
         <div class="stat-item" data-animate="heading">
-          <div class="stat-number">Live</div>
-          <div class="stat-label">Только практика</div>
+          <div class="stat-number">{t('stats.format_value')}</div>
+          <div class="stat-label">{t('stats.format_label')}</div>
         </div>
       </div>
     </div>
@@ -290,13 +290,13 @@ const eventDateLabel = activeEvent
     <div class="max-w-4xl mx-auto relative">
       <div class="text-center mb-10">
         <span class="inline-block text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4" style="background: rgba(0,107,95,0.08); color: var(--color-accent-secondary); border: 1px solid rgba(0,107,95,0.2);">
-          Бесплатный тест
+          {t('quiz.badge')}
         </span>
         <h2 class="text-3xl md:text-4xl font-bold font-heading mb-3" data-animate="heading">
-          Насколько ты готов к IT-карьере?
+          {t('quiz.headline')}
         </h2>
         <p class="text-[var(--color-text-secondary)] max-w-xl mx-auto">
-          7 вопросов · Получи персональную оценку уровня · Узнай, какой курс подходит именно тебе
+          {t('quiz.subheadline')}
         </p>
       </div>
       <Quiz questions={quizQuestions} assessments={quizAssessments} quizLength={7} client:visible />
@@ -337,7 +337,7 @@ const eventDateLabel = activeEvent
         <div class="glass-card p-6 md:p-8 opacity-55" data-animate="compare-right">
           <h3 class="text-lg font-semibold text-[var(--color-text-secondary)] mb-6 flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-[var(--color-text-secondary)]/40"></span>
-            Самообучение
+            {t('value.selfstudy_label')}
           </h3>
           <ul class="space-y-4">
             {[1,2,3,4,5].map((i) => (
@@ -386,7 +386,7 @@ const eventDateLabel = activeEvent
           <div class="flex items-center gap-2 mb-4">
             <span class="urgency-badge">
               <span class="urgency-dot"></span>
-              Регистрация открыта
+              {t('register.badge')}
             </span>
           </div>
           <h2 class="text-3xl md:text-4xl font-bold mb-4 font-heading" data-animate="heading">
@@ -402,7 +402,7 @@ const eventDateLabel = activeEvent
               {eventDateLabel} &bull; {t('register.event_location')}
             </p>
 
-            <p class="text-sm font-semibold text-[var(--color-text-primary)] mb-3">Что тебя ждёт:</p>
+            <p class="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t('register.what_awaits')}</p>
             <ul class="space-y-2.5">
               {eventExperiences.map((exp) => (
                 <li class="flex items-start gap-2.5 text-sm">

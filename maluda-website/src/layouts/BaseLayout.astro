@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { t, isLocale } from '../i18n';
 
 interface Props {
   title: string;
@@ -16,6 +17,8 @@ const {
   lang = 'ru',
   heroPoster,
 } = Astro.props;
+
+const locale = isLocale(lang) ? lang : 'ru';
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://maluda.ge');
 const siteURL = (Astro.site ?? new URL('https://maluda.ge')).toString().replace(/\/$/, '');
@@ -114,7 +117,7 @@ const organizationJsonLd = {
       class="sr-only focus:not-sr-only fixed top-2 left-2 z-[100] px-4 py-2 rounded-md font-semibold"
       style="background: var(--color-accent-secondary); color: white;"
     >
-      Перейти к содержимому
+      {t('a11y.skip_to_main', locale)}
     </a>
     <slot />
 
